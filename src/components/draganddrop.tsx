@@ -21,7 +21,6 @@ const DragNDrop: React.FC<DragNDropProps> = ({ data }) => {
   const dragNode = useRef<EventTarget>();
 
   const handleDragStart = (e: MouseEvent, params: DragProps) => {
-    console.log("Drag Start....", params);
     dragItem.current = params;
     dragNode.current = e.target;
     dragNode.current.addEventListener("dragend", handleDragEnd);
@@ -31,7 +30,6 @@ const DragNDrop: React.FC<DragNDropProps> = ({ data }) => {
   };
 
   const handleDragEnd = () => {
-    console.log("dragend-----");
     dragItem.current = { grpI: -1, itemI: -1 };
     dragNode.current?.removeEventListener("dragend", handleDragEnd);
     dragNode.current = undefined;
@@ -41,7 +39,6 @@ const DragNDrop: React.FC<DragNDropProps> = ({ data }) => {
   const handleDragEnter = (e: MouseEvent, params: DragProps) => {
     const currentItem = dragItem.current;
     if (e.target !== dragNode.current) {
-      console.log("not the same location");
       setList((oldList) => {
         let newList = JSON.parse(JSON.stringify(oldList));
         newList[params.grpI].items.splice(
@@ -70,7 +67,16 @@ const DragNDrop: React.FC<DragNDropProps> = ({ data }) => {
     <div className="drag-n-drop">
       {list.map((grp: DragNDropData, grpI: number) => (
         <div key={grp.title} className="dnd-group">
-          <div className="group-head">{grp.title}</div>
+          <div
+            className="group-head"
+            onDragEnter={
+              dragging && !grp.items.length
+                ? (e) => handleDragEnter(e, { grpI, itemI: 0 })
+                : undefined
+            }
+          >
+            {grp.title}
+          </div>
           {grp.items.map((item, itemI) => (
             <div
               draggable
