@@ -17,19 +17,32 @@ type DragProps = {
 const DragNDrop: React.FC<DragNDropProps> = ({ data }) => {
   const [list, setList] = useState(data);
   const [dragging, setDragging] = useState(false);
-  let dragItem = useRef<DragProps>({ grpI: -1, itemI: -1 });
+  const dragItem = useRef<DragProps | null>({ grpI: -1, itemI: -1 });
+  const dragNode = useRef<EventTarget | null>();
 
   const handleDragStart = (e: React.MouseEvent, params: DragProps) => {
     console.log("Drag Start....", params);
     dragItem.current = params;
-    setDragging(true);
+    dragNode.current = e.target;
+    dragNode.current.addEventListener("dragend", handleDragEnd);
+    setTimeout(() => {
+      setDragging(true);
+    });
+  };
+
+  const handleDragEnd = () => {
+    console.log("dragend-----");
+    dragItem.current = null;
+    dragNode.current?.removeEventListener("dragend", handleDragEnd);
+    dragNode.current = null;
+    setDragging(false);
   };
 
   const getStyles = (params: DragProps) => {
     const currentItem = dragItem.current;
     if (
-      currentItem.grpI === params.grpI &&
-      currentItem.itemI === params.itemI
+      currentItem?.grpI === params.grpI &&
+      currentItem?.itemI === params.itemI
     ) {
       return "current dnd-item";
     }
