@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, MouseEvent } from "react";
 
 export interface DragNDropData {
   title: string;
@@ -17,10 +17,10 @@ type DragProps = {
 const DragNDrop: React.FC<DragNDropProps> = ({ data }) => {
   const [list, setList] = useState(data);
   const [dragging, setDragging] = useState(false);
-  const dragItem = useRef<DragProps | null>({ grpI: -1, itemI: -1 });
-  const dragNode = useRef<EventTarget | null>();
+  const dragItem = useRef<DragProps>({ grpI: -1, itemI: -1 });
+  const dragNode = useRef<EventTarget>();
 
-  const handleDragStart = (e: React.MouseEvent, params: DragProps) => {
+  const handleDragStart = (e: MouseEvent, params: DragProps) => {
     console.log("Drag Start....", params);
     dragItem.current = params;
     dragNode.current = e.target;
@@ -32,10 +32,27 @@ const DragNDrop: React.FC<DragNDropProps> = ({ data }) => {
 
   const handleDragEnd = () => {
     console.log("dragend-----");
-    dragItem.current = null;
+    dragItem.current = { grpI: -1, itemI: -1 };
     dragNode.current?.removeEventListener("dragend", handleDragEnd);
-    dragNode.current = null;
+    dragNode.current = undefined;
     setDragging(false);
+  };
+
+  const handleDragEnter = (e: MouseEvent, params: DragProps) => {
+    const currentItem = dragItem.current;
+    if (e.target !== dragNode.current) {
+      console.log("not the same location");
+      setList((oldList) => {
+        let newList = JSON.parse(JSON.stringify(oldList));
+        newList[params.grpI].items.splice(
+          params.itemI,
+          0,
+          newList[currentItem.grpI].items.splice(currentItem.itemI, 1)[0]
+        );
+        dragItem.current = params;
+        return newList;
+      });
+    }
   };
 
   const getStyles = (params: DragProps) => {
@@ -58,6 +75,11 @@ const DragNDrop: React.FC<DragNDropProps> = ({ data }) => {
             <div
               draggable
               onDragStart={(e) => handleDragStart(e, { grpI, itemI })}
+              onDragEnter={
+                dragging
+                  ? (e) => handleDragEnter(e, { grpI, itemI })
+                  : undefined
+              }
               key={item}
               className={dragging ? getStyles({ grpI, itemI }) : "dnd-item"}
             >
